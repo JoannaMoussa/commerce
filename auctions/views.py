@@ -6,6 +6,8 @@ from django.urls import reverse
 from .models import User, Listing, Bid, Comments, CATEGORIES
 from django import forms
 
+MAX_DESCRIPTION_LEN = 100
+
 # Creating a django form that allows the user to create a new listing.
 class NewListingForm(forms.Form):
     title = forms.CharField(label="Listing Title", required=True, widget=forms.TextInput(attrs={'class': 'form-control col-2 mb-3'}))
@@ -16,7 +18,13 @@ class NewListingForm(forms.Form):
 
 
 def index(request):
-    return render(request, "auctions/index.html")
+    active_listings = Listing.objects.all()
+    for active_listing in active_listings:
+        if len(active_listing.description) > MAX_DESCRIPTION_LEN:
+            active_listing.description = active_listing.description[:MAX_DESCRIPTION_LEN-3] + "..."
+    return render(request, "auctions/index.html", {
+        "active_listings": active_listings
+    })
 
 
 def login_view(request):
