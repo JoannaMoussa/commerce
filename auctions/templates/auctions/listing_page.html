@@ -1,0 +1,42 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <h2>Listing: {{ current_listing.title }}</h2>
+    <div>
+        {% if user.is_authenticated %}
+            {% if watchlist_button %}
+                <form action="{% url 'auctions:add_to_watchlist' %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" value="{{current_listing.id}}" name="listing_id">
+                    <button class="btn btn-success" type="submit">
+                        <i class="bi bi-plus-lg mr-1"></i>
+                        Add to Watchlist
+                    </button>
+                </form>
+            {% else %}
+                <form action="{% url 'auctions:remove_from_watchlist' %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" value="{{current_listing.id}}" name="listing_id">
+                    <button class="btn btn-danger" type="submit">
+                        <i class="bi bi-trash3 mr-1"></i>
+                        Delete from Watchlist
+                    </button>
+                </form>
+            {% endif %}
+        {% endif %}
+        <img src="{{ current_listing.image_url }}" alt="{{ current_listing.title }}">
+        <div>{{ current_listing.description }}</div>
+        <div>Category: {{ current_listing.category }}</div>
+        <div>Listed by: {{ current_listing.creator_id }}</div>
+        <!--Adjust the price to be the max of bids-->
+        <div>${{ current_listing.initial_bid }}</div>
+        {% if user.is_authenticated %}
+            <form action="{% url 'auctions:add_bid' %}" method="post">
+                {% csrf_token %}
+                {{ form }}
+                <input class="btn btn-primary" type="submit" value="Place Bid">
+            </form>
+        {% endif %}
+    </div>
+
+{% endblock %}

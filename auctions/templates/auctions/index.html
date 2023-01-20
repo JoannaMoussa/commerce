@@ -14,10 +14,11 @@
             <div class="d-flex flex-column justify-content-between card-body">
                 <div class="mb-3">
                     <h5 class="card-title">{{active_listing.title}}</h5>
+                    <!--Adjust the price to be the max of bids-->
                     <h6 class="card-subtitle mb-2 text-muted">{{active_listing.initial_bid}}$</h6>
                     <p class="card-text">{{active_listing.description}}</p>
                 </div>
-                <a href="#" class="btn btn-primary" style="width: fit-content;">Details</a>
+                <a href="{% url 'auctions:listing_page' active_listing.id %}" class="btn btn-primary" style="width: fit-content;">Details</a>
             </div>
         </div>
         {% endfor %}
