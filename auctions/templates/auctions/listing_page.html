@@ -3,8 +3,8 @@
 {% block body %}
     <h2>Listing: {{ current_listing.title }}</h2>
     <div>
-        {% if user.is_authenticated %}
-            {% if watchlist_button %}
+        {% if user.is_authenticated and not user_is_creator %}
+            {% if add_to_watchlist %}
                 <form action="{% url 'auctions:add_to_watchlist' %}" method="post">
                     {% csrf_token %}
                     <input type="hidden" value="{{current_listing.id}}" name="listing_id">
@@ -28,12 +28,16 @@
         <div>{{ current_listing.description }}</div>
         <div>Category: {{ current_listing.category }}</div>
         <div>Listed by: {{ current_listing.creator_id }}</div>
-        <!--Adjust the price to be the max of bids-->
-        <div>${{ current_listing.initial_bid }}</div>
-        {% if user.is_authenticated %}
+        {% if is_initial_bid %}
+            <div>${{ current_listing.initial_bid }} - Initial bid</div>
+        {% else %}
+            <div>${{ highest_bid }} - Highest bid</div>
+        {% endif %}
+        {% if user.is_authenticated and not user_is_creator %}
             <form action="{% url 'auctions:add_bid' %}" method="post">
                 {% csrf_token %}
                 {{ form }}
+                <input type="hidden" value="{{current_listing.id}}" name="listing_id">
                 <input class="btn btn-primary" type="submit" value="Place Bid">
             </form>
         {% endif %}

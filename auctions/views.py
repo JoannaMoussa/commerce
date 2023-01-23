@@ -5,6 +5,9 @@ from django.shortcuts import render
 from django.urls import reverse
 from .models import User, Listing, Bid, Comments, CATEGORIES
 from django import forms
+from django.db.models import Max
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
 MAX_DESCRIPTION_LEN = 100
 
@@ -25,8 +28,16 @@ class PlaceBidForm(forms.Form):
 def index(request):
     active_listings = Listing.objects.all()
     for active_listing in active_listings:
+        # Handling long descriptions
         if len(active_listing.description) > MAX_DESCRIPTION_LEN:
             active_listing.description = active_listing.description[:MAX_DESCRIPTION_LEN-3] + "..."
+        # Decide what bid value to show for listings
+        if active_listing.biddings.exists():
+            active_listing.is_initial_bid = False
+            active_listing.max_bid = active_listing.biddings.all().aggregate(Max("bid_value"))["bid_value__max"]
+        else:
+            active_listing.is_initial_bid = True
+    
     return render(request, "auctions/index.html", {
         "active_listings": active_listings
     })
@@ -45,9 +56,8 @@ def login_view(request):
             login(request, user)
             return HttpResponseRedirect(reverse("auctions:index"))
         else:
-            return render(request, "auctions/login.html", {
-                "message": "Invalid username and/or password."
-            })
+            messages.error(request, 'Invalid username and/or password.')
+            return render(request, "auctions/login.html")
     else:
         return render(request, "auctions/login.html")
 
@@ -66,24 +76,23 @@ def register(request):
         password = request.POST["password"]
         confirmation = request.POST["confirmation"]
         if password != confirmation:
-            return render(request, "auctions/register.html", {
-                "message": "Passwords must match."
-            })
+            messages.error(request, 'Passwords must match')
+            return render(request, "auctions/register.html")
 
         # Attempt to create new user
         try:
             user = User.objects.create_user(username, email, password)
             user.save()
         except IntegrityError:
-            return render(request, "auctions/register.html", {
-                "message": "Username already taken."
-            })
+            messages.error(request, 'Username already taken')
+            return render(request, "auctions/register.html")
         login(request, user)
         return HttpResponseRedirect(reverse("auctions:index"))
     else:
         return render(request, "auctions/register.html")
 
 
+@login_required(login_url='/login')
 def create_listing(request):
     if request.method == "POST":
         current_user = request.user
@@ -95,9 +104,8 @@ def create_listing(request):
         new_listing.image_url = request.POST['image_url']
         new_listing.category = request.POST['category']
         new_listing.save()
-        return render(request, "auctions/index.html", {
-            "message": "Your listing was created successfully!"
-        })
+        messages.success(request, 'Your listing was created successfully!')
+        return render(request, "auctions/index.html")
     else: # GET
         return render(request, "auctions/create_listing.html", {
             "form": NewListingForm()
@@ -106,25 +114,39 @@ def create_listing(request):
 
 def listing_page(request, listing_id):
     current_listing = Listing.objects.get(id=listing_id)
+    highest_bid = None
+    # checking if first bid or there are existing bid values
+    if current_listing.biddings.exists():
+        is_initial_bid = False
+        highest_bid = current_listing.biddings.all().aggregate(Max("bid_value"))["bid_value__max"]
+    else:
+        is_initial_bid = True
     if request.user.is_authenticated:
         current_user = request.user
-        if current_listing in current_user.watchlist.all():
-            watchlist_button = False
+        user_is_creator = False
+        add_to_watchlist = False
+        if current_user == current_listing.creator_id:
+            user_is_creator = True
         else:
-            watchlist_button = True
+            if current_listing not in current_user.watchlist.all():
+                add_to_watchlist = True
         return render(request, "auctions/listing_page.html", {
             "current_listing": current_listing,
             "form": PlaceBidForm(),
-            "watchlist_button": watchlist_button
+            "user_is_creator": user_is_creator,
+            "add_to_watchlist": add_to_watchlist,
+            "is_initial_bid": is_initial_bid,
+            "highest_bid": highest_bid
         })
     else:
         return render(request, "auctions/listing_page.html", {
             "current_listing": current_listing,
-            "form": PlaceBidForm()
+            "is_initial_bid": is_initial_bid,
+            "highest_bid": highest_bid
         })
 
 
-# TODO @login_required
+@login_required(login_url='/login')
 def add_to_watchlist(request):
     if request.method == "POST":
         current_user = request.user
@@ -137,6 +159,7 @@ def add_to_watchlist(request):
         return HttpResponseRedirect(reverse("auctions:index"))
 
 
+@login_required(login_url='/login')
 def remove_from_watchlist(request):
     if request.method == "POST":
         current_user = request.user
@@ -149,5 +172,36 @@ def remove_from_watchlist(request):
         return HttpResponseRedirect(reverse("auctions:index"))
 
 
+@login_required(login_url='/login')
 def add_bid(request):
-    pass
+    if request.method == "POST":
+        current_user = request.user
+        listing_id = request.POST["listing_id"]
+        current_listing = Listing.objects.get(id=listing_id)
+        allow_bid = False
+        # if it's the first bid
+        if not current_listing.biddings.exists():
+            # check whether the bid chosen by the user is >= or less than the initial bid value
+            if float(request.POST["bid"]) >= current_listing.initial_bid:
+                allow_bid = True
+        else: # if there are bids for this listing
+            # get max of existing bid values
+            biddings = current_listing.biddings.all()
+            # biddings.aggregate(Max("bid_value")) returns a dictionary where the key is bid_value__max
+            # and the value is a float (the max bid)
+            highest_bid = biddings.aggregate(Max("bid_value"))["bid_value__max"]
+            # check if the bid chosen by the user is greater than the max bid
+            if float(request.POST["bid"]) > highest_bid:
+                allow_bid = True
+        if allow_bid:
+            new_bid = Bid()
+            new_bid.user_id = current_user
+            new_bid.listing_id = current_listing
+            new_bid.bid_value = request.POST["bid"]
+            new_bid.save()
+            messages.success(request, 'Your bid was added successfully!')
+        else:
+            messages.error(request, 'Your bid must be higher than the existing bids.')
+        return HttpResponseRedirect(reverse("auctions:listing_page", kwargs={'listing_id': listing_id}))
+    else: # GET
+        return HttpResponseRedirect(reverse("auctions:index"))
