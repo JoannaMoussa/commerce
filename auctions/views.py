@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from .models import User, Listing, Bid, Comments, CATEGORIES
 from django import forms
-from django.db.models import Max
+from django.db.models import Max, Count
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
@@ -115,16 +115,30 @@ def create_listing(request):
 def listing_page(request, listing_id):
     current_listing = Listing.objects.get(id=listing_id)
     highest_bid = None
+    number_of_biddings = 0
+    highest_bidder = None
+    user_is_highest_bidder = False
     # checking if first bid or there are existing bid values
     if current_listing.biddings.exists():
         is_initial_bid = False
-        highest_bid = current_listing.biddings.all().aggregate(Max("bid_value"))["bid_value__max"]
+        #highest_bid = current_listing.biddings.all().aggregate(Max("bid_value"))["bid_value__max"]
+        # .aggregate(Count()) returns a disctionary where the key is '{field}__{aggregation}'
+        # and the value is the aggregation result.
+        #number_of_biddings = current_listing.biddings.all().aggregate(Count("id"))["id__count"]
+
+        # aggregate_result is something like this: {'id__count': 4, 'bid_value__max': 130.0}
+        aggregate_result = current_listing.biddings.all().aggregate(Count("id"), Max("bid_value"))
+        highest_bid = aggregate_result["bid_value__max"]
+        number_of_biddings = aggregate_result["id__count"]
+        highest_bidder = current_listing.biddings.get(bid_value=highest_bid).user_id
     else:
         is_initial_bid = True
     if request.user.is_authenticated:
         current_user = request.user
         user_is_creator = False
         add_to_watchlist = False
+        if current_user == highest_bidder:
+            user_is_highest_bidder = True
         if current_user == current_listing.creator_id:
             user_is_creator = True
         else:
@@ -136,13 +150,17 @@ def listing_page(request, listing_id):
             "user_is_creator": user_is_creator,
             "add_to_watchlist": add_to_watchlist,
             "is_initial_bid": is_initial_bid,
-            "highest_bid": highest_bid
+            "highest_bid": highest_bid,
+            "number_of_biddings" : number_of_biddings,
+            "user_is_highest_bidder": user_is_highest_bidder,
+            "highest_bidder": highest_bidder,
         })
     else:
         return render(request, "auctions/listing_page.html", {
             "current_listing": current_listing,
             "is_initial_bid": is_initial_bid,
-            "highest_bid": highest_bid
+            "highest_bid": highest_bid,
+            "number_of_biddings": number_of_biddings
         })
 
 

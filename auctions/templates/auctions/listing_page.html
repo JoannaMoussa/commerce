@@ -33,6 +33,20 @@
         {% else %}
             <div>${{ highest_bid }} - Highest bid</div>
         {% endif %}
+        {% if number_of_biddings > 0 %}
+            {% if number_of_biddings == 1 %}
+                <div>1 bid so far.</div>
+            {% else %}
+                <div>{{ number_of_biddings }} bids so far.</div>
+            {% endif %}
+            {% if user_is_highest_bidder %}
+                <div>Your bid is the highest bid.</div>
+            {% else %}
+                <div>{{highest_bidder}} has the highest bid.</div>
+            {% endif %}
+        {% else %}
+            <div> No bids so far.</div>
+        {% endif %}
         {% if user.is_authenticated and not user_is_creator %}
             <form action="{% url 'auctions:add_bid' %}" method="post">
                 {% csrf_token %}
