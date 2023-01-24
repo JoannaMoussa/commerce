@@ -1,0 +1,22 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <h2 class="mb-5 ml-3">Bids for the item: {{ current_listing }}</h2>
+    <table class="table table-bordered table-hover w-auto ml-3">
+        <thead>
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Bid ($)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bidding in biddings %}
+                <tr>
+                    <td>{{bidding.user_id}}</td>
+                    <td>{{bidding.bid_value}}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'auctions:listing_page' current_listing.id %}" class="ml-3">Go back to listing page</a>
+{% endblock %}

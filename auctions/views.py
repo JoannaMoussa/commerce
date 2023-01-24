@@ -105,7 +105,7 @@ def create_listing(request):
         new_listing.category = request.POST['category']
         new_listing.save()
         messages.success(request, 'Your listing was created successfully!')
-        return render(request, "auctions/index.html")
+        return HttpResponseRedirect(reverse("auctions:index"))
     else: # GET
         return render(request, "auctions/create_listing.html", {
             "form": NewListingForm()
@@ -160,7 +160,9 @@ def listing_page(request, listing_id):
             "current_listing": current_listing,
             "is_initial_bid": is_initial_bid,
             "highest_bid": highest_bid,
-            "number_of_biddings": number_of_biddings
+            "number_of_biddings": number_of_biddings,
+            "user_is_highest_bidder": user_is_highest_bidder,
+            "highest_bidder": highest_bidder
         })
 
 
@@ -223,3 +225,12 @@ def add_bid(request):
         return HttpResponseRedirect(reverse("auctions:listing_page", kwargs={'listing_id': listing_id}))
     else: # GET
         return HttpResponseRedirect(reverse("auctions:index"))
+
+
+def bids_details(request, listing_id):
+    current_listing = Listing.objects.get(id=listing_id)
+    biddings = current_listing.biddings.all()
+    return render(request, "auctions/bids_details.html", {
+        "current_listing": current_listing,
+        "biddings": biddings
+    })
