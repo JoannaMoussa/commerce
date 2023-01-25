@@ -2,7 +2,6 @@
 
 {% block body %}
     <h2 class="mb-5 text-center">Active Listings</h2>
-
     <div class="d-flex flex-wrap justify-content-start">
         {% for active_listing in active_listings %}
         <div class="card mb-4 ml-4" style="width: 18rem;">
@@ -10,7 +9,7 @@
             <div class="d-flex flex-column justify-content-between card-body">
                 <div class="mb-3">
                     <h5 class="card-title">{{active_listing.title}}</h5>
-                    {% if active_listing.is_initial_bid %}
+                    {% if active_listing.no_bids %}
                         <h6 class="card-subtitle mb-2 text-muted">{{active_listing.initial_bid}}$ - Initial Bid</h6>
                     {% else %}
                         <h6 class="card-subtitle mb-2">{{active_listing.max_bid}}$ - Highest Bid</h6>
@@ -18,6 +17,27 @@
                     <p class="card-text">{{active_listing.description}}</p>
                 </div>
                 <a href="{% url 'auctions:listing_page' active_listing.id %}" class="btn btn-primary" style="width: fit-content;">Details</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <h2 class="mb-5 text-center">Closed Listings</h2>
+    <div class="d-flex flex-wrap justify-content-start">
+        {% for closed_listing in closed_listings %}
+        <div class="card mb-4 ml-4" style="width: 18rem;">
+            <img class="card-img-top" src="{{closed_listing.image_url}}" alt="Card image cap">
+            <div class="d-flex flex-column justify-content-between card-body">
+                <div class="mb-3">
+                    <h5 class="card-title text-muted">{{closed_listing.title}}</h5>
+                    {% if closed_listing.no_bids %}
+                        <h6 class="card-subtitle mb-2 text-muted">Did not get sold</h6>
+                    {% else %}
+                        <h6 class="card-subtitle mb-2 text-muted">Sold at {{closed_listing.max_bid}}$</h6>
+                    {% endif %}
+                    <p class="card-text text-muted">{{closed_listing.description}}</p>
+                </div>
+                <a href="{% url 'auctions:listing_page' closed_listing.id %}" class="btn btn-secondary" style="width: fit-content;">Details</a>
             </div>
         </div>
         {% endfor %}

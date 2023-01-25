@@ -2,6 +2,11 @@
 
 {% block body %}
     <h2>Listing: {{ current_listing.title }}</h2>
+    {% if user.is_authenticated and user_is_creator and current_listing.is_closed == False %}
+            <a href="{% url 'auctions:close_auction' current_listing.id %}" class="btn btn-danger">
+                <i class="bi bi-x-lg pr-1"></i> Close auction
+            </a>
+    {% endif %}
     <div>
         {% if user.is_authenticated and not user_is_creator %}
             {% if add_to_watchlist %}
@@ -28,7 +33,7 @@
         <div>{{ current_listing.description }}</div>
         <div>Category: {{ current_listing.category }}</div>
         <div>Listed by: {{ current_listing.creator_id }}</div>
-        {% if is_initial_bid %}
+        {% if no_bids %}
             <div>${{ current_listing.initial_bid }} - Initial bid</div>
         {% else %}
             <div>${{ highest_bid }} - Highest bid</div>
@@ -39,7 +44,7 @@
             {% else %}
                 <a href="{% url 'auctions:bids_details' current_listing.id %}">{{ number_of_biddings }} bids so far</a>
             {% endif %}
-            {% if user_is_highest_bidder %}
+            {% if user == highest_bidder %}
                 <div>Your bid is the highest bid</div>
             {% else %}
                 <div>{{highest_bidder}} has the highest bid</div>

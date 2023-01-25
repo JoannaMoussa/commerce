@@ -26,20 +26,33 @@ class PlaceBidForm(forms.Form):
 
 
 def index(request):
-    active_listings = Listing.objects.all()
+    active_listings = Listing.objects.filter(is_closed=False)
+    closed_listings = Listing.objects.filter(is_closed=True)
     for active_listing in active_listings:
         # Handling long descriptions
         if len(active_listing.description) > MAX_DESCRIPTION_LEN:
             active_listing.description = active_listing.description[:MAX_DESCRIPTION_LEN-3] + "..."
-        # Decide what bid value to show for listings
+        # Decide what bid value to show for listings(the initial bid or the highest bid)
         if active_listing.biddings.exists():
-            active_listing.is_initial_bid = False
+            active_listing.no_bids = False
             active_listing.max_bid = active_listing.biddings.all().aggregate(Max("bid_value"))["bid_value__max"]
         else:
-            active_listing.is_initial_bid = True
+            active_listing.no_bids = True
+
+    for closed_listing in closed_listings:
+        # Handling long descriptions
+        if len(closed_listing.description) > MAX_DESCRIPTION_LEN:
+            closed_listing.description = closed_listing.description[:MAX_DESCRIPTION_LEN-3] + "..."
+        # Decide what bid value to show for listings(the initial bid or the highest bid)
+        if closed_listing.biddings.exists():
+            closed_listing.no_bids = False
+            closed_listing.max_bid = closed_listing.biddings.all().aggregate(Max("bid_value"))["bid_value__max"]
+        else:
+            closed_listing.no_bids = True
     
     return render(request, "auctions/index.html", {
-        "active_listings": active_listings
+        "active_listings": active_listings,
+        "closed_listings": closed_listings
     })
 
 
@@ -117,53 +130,55 @@ def listing_page(request, listing_id):
     highest_bid = None
     number_of_biddings = 0
     highest_bidder = None
-    user_is_highest_bidder = False
+    user_is_creator = False
+    add_to_watchlist = False
+
     # checking if first bid or there are existing bid values
     if current_listing.biddings.exists():
-        is_initial_bid = False
+        no_bids = False
+        # first method to get the highest bid and the number of bids
         #highest_bid = current_listing.biddings.all().aggregate(Max("bid_value"))["bid_value__max"]
         # .aggregate(Count()) returns a disctionary where the key is '{field}__{aggregation}'
         # and the value is the aggregation result.
         #number_of_biddings = current_listing.biddings.all().aggregate(Count("id"))["id__count"]
 
+        # Second method to get the highest bid and the number of bids in one line
         # aggregate_result is something like this: {'id__count': 4, 'bid_value__max': 130.0}
         aggregate_result = current_listing.biddings.all().aggregate(Count("id"), Max("bid_value"))
         highest_bid = aggregate_result["bid_value__max"]
         number_of_biddings = aggregate_result["id__count"]
         highest_bidder = current_listing.biddings.get(bid_value=highest_bid).user_id
     else:
-        is_initial_bid = True
+        no_bids = True
+
     if request.user.is_authenticated:
         current_user = request.user
-        user_is_creator = False
-        add_to_watchlist = False
-        if current_user == highest_bidder:
-            user_is_highest_bidder = True
         if current_user == current_listing.creator_id:
             user_is_creator = True
         else:
             if current_listing not in current_user.watchlist.all():
                 add_to_watchlist = True
-        return render(request, "auctions/listing_page.html", {
+
+    # if the auction of the current_listing is closed
+    if current_listing.is_closed == True:
+        return render(request, "auctions/closed_listing_page.html", {
             "current_listing": current_listing,
-            "form": PlaceBidForm(),
-            "user_is_creator": user_is_creator,
-            "add_to_watchlist": add_to_watchlist,
-            "is_initial_bid": is_initial_bid,
+            "no_bids": no_bids,
             "highest_bid": highest_bid,
             "number_of_biddings" : number_of_biddings,
-            "user_is_highest_bidder": user_is_highest_bidder,
-            "highest_bidder": highest_bidder,
-        })
-    else:
-        return render(request, "auctions/listing_page.html", {
-            "current_listing": current_listing,
-            "is_initial_bid": is_initial_bid,
-            "highest_bid": highest_bid,
-            "number_of_biddings": number_of_biddings,
-            "user_is_highest_bidder": user_is_highest_bidder,
             "highest_bidder": highest_bidder
         })
+
+    return render(request, "auctions/listing_page.html", {
+        "current_listing": current_listing,
+        "form": PlaceBidForm(),
+        "user_is_creator": user_is_creator,
+        "add_to_watchlist": add_to_watchlist,
+        "no_bids": no_bids,
+        "highest_bid": highest_bid,
+        "number_of_biddings" : number_of_biddings,
+        "highest_bidder": highest_bidder,
+    })
 
 
 @login_required(login_url='/login')
@@ -221,7 +236,11 @@ def add_bid(request):
             new_bid.save()
             messages.success(request, 'Your bid was added successfully!')
         else:
-            messages.error(request, 'Your bid must be higher than the existing bids.')
+            # if there are other bids
+            if current_listing.biddings.exists():
+                messages.error(request, 'Your bid must be greater than the highest bid.')
+            else: # if it's the first bid
+                messages.error(request, 'Your bid must be equal to or greater than the initial bid.')
         return HttpResponseRedirect(reverse("auctions:listing_page", kwargs={'listing_id': listing_id}))
     else: # GET
         return HttpResponseRedirect(reverse("auctions:index"))
@@ -234,3 +253,11 @@ def bids_details(request, listing_id):
         "current_listing": current_listing,
         "biddings": biddings
     })
+
+
+def close_auction(request, listing_id):
+    current_listing = Listing.objects.get(id=listing_id)
+    current_listing.is_closed = True
+    current_listing.save()
+    return HttpResponseRedirect(reverse("auctions:index"))
+

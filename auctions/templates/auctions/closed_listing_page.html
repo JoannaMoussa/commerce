@@ -1,0 +1,23 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <h2>Listing: {{ current_listing.title }} - Closed</h2>
+    <img src="{{ current_listing.image_url }}" alt="{{ current_listing.title }}">
+    <div>{{ current_listing.description }}</div>
+    <div>Category: {{ current_listing.category }}</div>
+    <div>Listed by: {{ current_listing.creator_id }}</div>
+    {% if no_bids %}
+        <div>No bids were made for this listing</div>
+    {% else %}
+        {% if number_of_biddings == 1 %}
+            <a href="{% url 'auctions:bids_details' current_listing.id %}">1 bid was made for that listing</a>
+        {% else %}
+            <a href="{% url 'auctions:bids_details' current_listing.id %}">{{ number_of_biddings }} bids were made for that listing</a>
+        {% endif %}
+        {% if user == highest_bidder %}
+            <div>Congrats {{ user }}, you won the auction!</div>
+        {% else %}
+            <div>{{ highest_bidder }} won the auction with a {{ highest_bid }}$ bid</div>
+        {% endif %}
+    {% endif %}
+{% endblock %}
