@@ -20,4 +20,15 @@
             <div>{{ highest_bidder }} won the auction with a {{ highest_bid }}$ bid</div>
         {% endif %}
     {% endif %}
+    <div class="mt-3 mx-5" style="max-width:750px;">
+        <div>Comments</div>
+        {% for listing_comment in listing_comments %}
+            <div class="card mt-2">
+                <div class="card-body">
+                    <h5 class="card-title">{{ listing_comment.user_id }}</h5>
+                    <p class="card-text">{{ listing_comment.comment }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
 {% endblock %}

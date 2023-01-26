@@ -25,6 +25,11 @@ class PlaceBidForm(forms.Form):
     bid = forms.FloatField(label="Bid", required=True, widget=forms.NumberInput(attrs={'class': 'form-control col-2 mb-3', 'placeholder': 'Bid'}))
 
 
+# django form that allows the user to add a comment for a listing.
+class AddCommentForm(forms.Form):
+    comment = forms.CharField(label="", required=True, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Add comment'}))
+
+
 def index(request):
     active_listings = Listing.objects.filter(is_closed=False)
     closed_listings = Listing.objects.filter(is_closed=True)
@@ -159,6 +164,8 @@ def listing_page(request, listing_id):
             if current_listing not in current_user.watchlist.all():
                 add_to_watchlist = True
 
+    listing_comments = current_listing.comments.all()
+
     # if the auction of the current_listing is closed
     if current_listing.is_closed == True:
         return render(request, "auctions/closed_listing_page.html", {
@@ -166,18 +173,21 @@ def listing_page(request, listing_id):
             "no_bids": no_bids,
             "highest_bid": highest_bid,
             "number_of_biddings" : number_of_biddings,
-            "highest_bidder": highest_bidder
+            "highest_bidder": highest_bidder,
+            "listing_comments": listing_comments
         })
 
     return render(request, "auctions/listing_page.html", {
         "current_listing": current_listing,
-        "form": PlaceBidForm(),
+        "add_bid_form": PlaceBidForm(),
+        "add_comment_form": AddCommentForm(),
         "user_is_creator": user_is_creator,
         "add_to_watchlist": add_to_watchlist,
         "no_bids": no_bids,
         "highest_bid": highest_bid,
         "number_of_biddings" : number_of_biddings,
         "highest_bidder": highest_bidder,
+        "listing_comments": listing_comments
     })
 
 
@@ -245,7 +255,7 @@ def add_bid(request):
     else: # GET
         return HttpResponseRedirect(reverse("auctions:index"))
 
-
+@login_required(login_url='/login')
 def bids_details(request, listing_id):
     current_listing = Listing.objects.get(id=listing_id)
     biddings = current_listing.biddings.all()
@@ -261,3 +271,17 @@ def close_auction(request, listing_id):
     current_listing.save()
     return HttpResponseRedirect(reverse("auctions:index"))
 
+
+@login_required(login_url='/login')
+def add_comment(request, listing_id):
+    if request.method == "POST":
+        current_user = request.user
+        new_comment = Comments()
+        new_comment.user_id = current_user
+        new_comment.listing_id = Listing.objects.get(id=listing_id)
+        new_comment.comment = request.POST["comment"]
+        new_comment.save()
+        messages.success(request, 'Your comment was added successfully!')
+        return HttpResponseRedirect(reverse("auctions:listing_page", kwargs={'listing_id': listing_id}))
+    else: # GET
+        return HttpResponseRedirect(reverse("auctions:index"))

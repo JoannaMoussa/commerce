@@ -7,7 +7,7 @@
                 <i class="bi bi-x-lg pr-1"></i> Close auction
             </a>
     {% endif %}
-    <div>
+    <div class="mx-5">
         {% if user.is_authenticated and not user_is_creator %}
             {% if add_to_watchlist %}
                 <form action="{% url 'auctions:add_to_watchlist' %}" method="post">
@@ -55,10 +55,26 @@
         {% if user.is_authenticated and not user_is_creator %}
             <form action="{% url 'auctions:add_bid' %}" method="post">
                 {% csrf_token %}
-                {{ form }}
+                {{ add_bid_form }}
                 <input type="hidden" value="{{current_listing.id}}" name="listing_id">
                 <input class="btn btn-primary" type="submit" value="Place Bid">
             </form>
+
+            <div class="d-flex flex-column mt-3 mx-5" style="max-width:750px;">
+                <form action="{% url 'auctions:add_comment' current_listing.id %}" method="post" class="d-flex">
+                    {% csrf_token %}
+                    {{ add_comment_form }}
+                    <input class="btn btn-primary ml-2" type="submit" value="Add comment">
+                </form>
+                {% for listing_comment in listing_comments %}
+                    <div class="card mt-2">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ listing_comment.user_id }}</h5>
+                            <p class="card-text">{{ listing_comment.comment }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
     </div>
 
