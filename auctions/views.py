@@ -285,3 +285,49 @@ def add_comment(request, listing_id):
         return HttpResponseRedirect(reverse("auctions:listing_page", kwargs={'listing_id': listing_id}))
     else: # GET
         return HttpResponseRedirect(reverse("auctions:index"))
+
+
+@login_required(login_url='/login')
+def watchlist(request):
+    current_user = request.user
+    watchlist_listings = current_user.watchlist.all()
+    for watchlist_listing in watchlist_listings:
+        # Handling long descriptions
+        if len(watchlist_listing.description) > MAX_DESCRIPTION_LEN:
+            watchlist_listing.description = watchlist_listing.description[:MAX_DESCRIPTION_LEN-3] + "..."
+        # Decide what bid value to show for listings(the initial bid or the highest bid)
+        if watchlist_listing.biddings.exists():
+            watchlist_listing.no_bids = False
+            watchlist_listing.max_bid = watchlist_listing.biddings.all().aggregate(Max("bid_value"))["bid_value__max"]
+        else:
+            watchlist_listing.no_bids = True
+    return render(request, "auctions/watchlist.html", {
+        "watchlist_listings": watchlist_listings
+    })
+
+
+def categories(request):
+    categories = []
+    for category in CATEGORIES:
+        categories.append(category[1])
+    return render(request, "auctions/categories.html", {
+        "categories": categories
+    })
+
+
+def listings_by_category(request, category_name):
+    filtered_listings = Listing.objects.filter(category=category_name, is_closed=False)
+    for filtered_listing in filtered_listings:
+        # Handling long descriptions
+        if len(filtered_listing.description) > MAX_DESCRIPTION_LEN:
+            filtered_listing.description = filtered_listing.description[:MAX_DESCRIPTION_LEN-3] + "..."
+        # Decide what bid value to show for listings(the initial bid or the highest bid)
+        if filtered_listing.biddings.exists():
+            filtered_listing.no_bids = False
+            filtered_listing.max_bid = filtered_listing.biddings.all().aggregate(Max("bid_value"))["bid_value__max"]
+        else:
+            filtered_listing.no_bids = True
+    return render(request, "auctions/active_listings_by_category.html", {
+        "category_name": category_name,
+        "filtered_listings": filtered_listings
+    })

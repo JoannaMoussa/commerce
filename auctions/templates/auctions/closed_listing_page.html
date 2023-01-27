@@ -2,7 +2,9 @@
 
 {% block body %}
     <h2>Listing: {{ current_listing.title }} - Closed</h2>
-    <img src="{{ current_listing.image_url }}" alt="{{ current_listing.title }}">
+    <div class="img_container">
+        <img src="{{ current_listing.image_url }}" alt="{{ current_listing.title }}" class="img">
+    </div>
     <div>{{ current_listing.description }}</div>
     <div>Category: {{ current_listing.category }}</div>
     <div>Listed by: {{ current_listing.creator_id }}</div>
@@ -21,7 +23,6 @@
         {% endif %}
     {% endif %}
     <div class="mt-3 mx-5" style="max-width:750px;">
-        <div>Comments</div>
         {% for listing_comment in listing_comments %}
             <div class="card mt-2">
                 <div class="card-body">

@@ -1,0 +1,24 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <h2>Category: {{ category_name }}</h2>
+    <div class="d-flex flex-wrap justify-content-start">
+        {% for filtered_listing in filtered_listings %}
+            <div class="card mb-4 ml-4" style="width: 18rem;">
+                <img class="card-img-top" src="{{filtered_listing.image_url}}" alt="{{ filtered_listing.title }}">
+                <div class="d-flex flex-column justify-content-between card-body">
+                    <div class="mb-3">
+                        <h5 class="card-title">{{filtered_listing.title}}</h5>
+                        {% if filtered_listing.no_bids %}
+                            <h6 class="card-subtitle mb-2 text-muted">{{filtered_listing.initial_bid}}$ - Initial Bid</h6>
+                        {% else %}
+                            <h6 class="card-subtitle mb-2">{{filtered_listing.max_bid}}$ - Highest Bid</h6>
+                        {% endif %}
+                        <p class="card-text">{{filtered_listing.description}}</p>
+                    </div>
+                    <a href="{% url 'auctions:listing_page' filtered_listing.id %}" class="btn btn-primary" style="width: fit-content;">Details</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

@@ -3,9 +3,9 @@
 {% block body %}
     <h2>Listing: {{ current_listing.title }}</h2>
     {% if user.is_authenticated and user_is_creator and current_listing.is_closed == False %}
-            <a href="{% url 'auctions:close_auction' current_listing.id %}" class="btn btn-danger">
-                <i class="bi bi-x-lg pr-1"></i> Close auction
-            </a>
+        <a href="{% url 'auctions:close_auction' current_listing.id %}" class="btn btn-danger">
+            <i class="bi bi-x-lg pr-1"></i> Close auction
+        </a>
     {% endif %}
     <div class="mx-5">
         {% if user.is_authenticated and not user_is_creator %}
@@ -29,7 +29,9 @@
                 </form>
             {% endif %}
         {% endif %}
-        <img src="{{ current_listing.image_url }}" alt="{{ current_listing.title }}">
+        <div class="img_container">
+            <img src="{{ current_listing.image_url }}" alt="{{ current_listing.title }}" class="img">
+        </div>
         <div>{{ current_listing.description }}</div>
         <div>Category: {{ current_listing.category }}</div>
         <div>Listed by: {{ current_listing.creator_id }}</div>

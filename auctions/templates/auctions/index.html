@@ -5,7 +5,7 @@
     <div class="d-flex flex-wrap justify-content-start">
         {% for active_listing in active_listings %}
         <div class="card mb-4 ml-4" style="width: 18rem;">
-            <img class="card-img-top" src="{{active_listing.image_url}}" alt="Card image cap">
+            <img class="card-img-top" src="{{active_listing.image_url}}" alt="{{active_listing.title}}">
             <div class="d-flex flex-column justify-content-between card-body">
                 <div class="mb-3">
                     <h5 class="card-title">{{active_listing.title}}</h5>
@@ -26,7 +26,7 @@
     <div class="d-flex flex-wrap justify-content-start">
         {% for closed_listing in closed_listings %}
         <div class="card mb-4 ml-4" style="width: 18rem;">
-            <img class="card-img-top" src="{{closed_listing.image_url}}" alt="Card image cap">
+            <img class="card-img-top closed_listing_img" src="{{closed_listing.image_url}}" alt="{{closed_listing.title}}">
             <div class="d-flex flex-column justify-content-between card-body">
                 <div class="mb-3">
                     <h5 class="card-title text-muted">{{closed_listing.title}}</h5>

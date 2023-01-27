@@ -1,0 +1,46 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+        {% if not watchlist_listings %}
+            <h2>Your Watchlist is Empty</h2>
+        {% else %}
+            <h2>Your Watchlist</h2>
+            <div class="d-flex flex-wrap">
+                {% for watchlist_listing in watchlist_listings %}
+                    {% if watchlist_listing.is_closed %}
+                        <div class="card mb-4 ml-4" style="width: 18rem;">
+                            <img class="card-img-top closed_listing_img" src="{{watchlist_listing.image_url}}" alt="{{watchlist_listing.title}}">
+                            <div class="d-flex flex-column justify-content-between card-body">
+                                <div class="mb-3">
+                                    <h5 class="card-title text-muted">{{watchlist_listing.title}}</h5>
+                                    {% if watchlist_listing.no_bids %}
+                                        <h6 class="card-subtitle mb-2 text-muted">{{watchlist_listing.initial_bid}}$ - Initial Bid</h6>
+                                    {% else %}
+                                        <h6 class="card-subtitle mb-2 text-muted">{{watchlist_listing.max_bid}}$ - Highest Bid</h6>
+                                    {% endif %}
+                                    <p class="card-text text-muted">{{watchlist_listing.description}}</p>
+                                </div>
+                                <a href="{% url 'auctions:listing_page' watchlist_listing.id %}" class="btn btn-secondary" style="width: fit-content;">Details</a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="card mb-4 ml-4" style="width: 18rem;">
+                            <img class="card-img-top" src="{{watchlist_listing.image_url}}" alt="{{watchlist_listing.title}}">
+                            <div class="d-flex flex-column justify-content-between card-body">
+                                <div class="mb-3">
+                                    <h5 class="card-title">{{watchlist_listing.title}}</h5>
+                                    {% if watchlist_listing.no_bids %}
+                                        <h6 class="card-subtitle mb-2 text-muted">{{watchlist_listing.initial_bid}}$ - Initial Bid</h6>
+                                    {% else %}
+                                        <h6 class="card-subtitle mb-2">{{watchlist_listing.max_bid}}$ - Highest Bid</h6>
+                                    {% endif %}
+                                    <p class="card-text">{{watchlist_listing.description}}</p>
+                                </div>
+                                <a href="{% url 'auctions:listing_page' watchlist_listing.id %}" class="btn btn-primary" style="width: fit-content;">Details</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+{% endblock %}
