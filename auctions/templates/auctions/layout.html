@@ -9,41 +9,55 @@
         <link href="{% static 'auctions/styles.css' %}" rel="stylesheet">
     </head>
     <body>
-        <h1>Auctions</h1>
-        <div>
-            {% if user.is_authenticated %}
-                Signed in as <strong>{{ user.username }}</strong>.
-            {% else %}
-                Not signed in.
-            {% endif %}
-        </div>
-        <ul class="nav">
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'auctions:index' %}">Listings</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'auctions:categories' %}">Categories</a>
-            </li>
-            {% if user.is_authenticated %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'auctions:watchlist' %}">Watchlist</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'auctions:create_listing' %}">Create Listing</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'auctions:logout' %}">Log Out</a>
-                </li>
-            {% else %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'auctions:login' %}">Log In</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'auctions:register' %}">Register</a>
-                </li>
-            {% endif %}
-        </ul>
-        <hr>
+        <nav class="navbar fixed-top navbar-expand-md navbar-light bg-light">
+            <a class="navbar-brand font-weight-bold" href="{% url 'auctions:index' %}">
+                <img src="{% static 'auction_transparent_logo.png' %}" width="30" height="30" class="d-inline-block align-top" alt="">
+                Auction
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+          
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active mr-3">
+                        <a class="nav-link" href="{% url 'auctions:index' %}">Listings</a>
+                    </li>
+                    <li class="nav-item active mr-3">
+                        <a class="nav-link" href="{% url 'auctions:categories' %}">Categories</a>
+                    </li>
+                    {% if user.is_authenticated %}
+                        <li class="nav-item active mr-3">
+                            <a class="nav-link" href="{% url 'auctions:watchlist' %}">Watchlist</a>
+                        </li>
+                        <li class="nav-item active">
+                            <a class="nav-link" href="{% url 'auctions:create_listing' %}">Create Listing</a>
+                        </li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item active mr-3">
+                            <a class="nav-link" href="{% url 'auctions:logout' %}">Log Out</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item active mr-3">
+                            <a class="nav-link" href="{% url 'auctions:login' %}">Log In</a>
+                        </li>
+                        <li class="nav-item active mr-3">
+                            <a class="nav-link" href="{% url 'auctions:register' %}">Register</a>
+                        </li>
+                    {% endif %}
+                    <span class="navbar-text border-md-left">
+                        {% if user.is_authenticated %}
+                            Signed in as <strong>{{ user.username }}</strong>
+                        {% else %}
+                            Not signed in
+                        {% endif %}
+                    </span>
+                </ul>
+            </div>
+        </nav>
         {% include 'auctions/includes/messages.html' %}
         {% block body %}
         {% endblock %}

@@ -1,19 +1,68 @@
 {% extends "auctions/layout.html" %}
 
 {% block body %}
-    <h2>Listing: {{ current_listing.title }}</h2>
-    {% if user.is_authenticated and user_is_creator and current_listing.is_closed == False %}
-        <a href="{% url 'auctions:close_auction' current_listing.id %}" class="btn btn-danger">
-            <i class="bi bi-x-lg pr-1"></i> Close auction
-        </a>
-    {% endif %}
-    <div class="mx-5">
+    <!--container of the title + close auction btn or watchlist btn-->
+    <div class="d-flex">
+        <h2 class="listing_title">Listing: {{ current_listing.title }}</h2>
+    </div>
+        <!--container of the image + the specs-->
+        <div class="d-flex flex-wrap">
+            <!--Image container-->
+            <div>
+                <img src="{{ current_listing.image_url }}" alt="{{ current_listing.title }}" class="img">
+            </div>
+            <!--img specifications container-->
+            <div class="specs-container">
+                <div class="d-flex flex-column justify-content-between">
+                    <div class="text-justify"><strong>Description:</strong> {{ current_listing.description }}</div>
+                    <div><strong>Category:</strong> {{ current_listing.category }}</div>
+                </div>
+                <div><strong>Listed by:</strong> {{ current_listing.creator_id }}</div>
+                <div class="d-flex flex-column justify-content-between">
+                    {% if no_bids %}
+                        <div><strong>Price:</strong> ${{ current_listing.initial_bid }} - Initial bid</div>
+                    {% else %}
+                        <div><strong>Price:</strong> ${{ highest_bid }} - Highest bid</div>
+                    {% endif %}
+                    {% if number_of_biddings > 0 %}
+                        {% if number_of_biddings == 1 %}
+                            <a href="{% url 'auctions:bids_details' current_listing.id %}">1 bid so far</a>
+                        {% else %}
+                            <a href="{% url 'auctions:bids_details' current_listing.id %}">{{ number_of_biddings }} bids so far</a>
+                        {% endif %}
+                        {% if user == highest_bidder %}
+                            <div>Your bid is the highest bid</div>
+                        {% else %}
+                            <div>{{highest_bidder}} has the highest bid</div>
+                        {% endif %}
+                    {% else %}
+                        <div> No bids so far</div>
+                    {% endif %}
+                    {% if user.is_authenticated and not user_is_creator %}
+                        <form action="{% url 'auctions:add_bid' %}" method="post" class="form-inline">
+                            {% csrf_token %}
+                            {{ add_bid_form }}
+                            <input type="hidden" value="{{current_listing.id}}" name="listing_id">
+                            <input class="btn btn-primary" type="submit" value="Place Bid">
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+
+        {% if user.is_authenticated and user_is_creator and current_listing.is_closed == False %}
+            <a href="{% url 'auctions:close_auction' current_listing.id %}" class="btn btn-danger close_auction_btn">
+                <i class="bi bi-x-lg pr-2"></i> 
+                Close auction
+            </a>
+        {% endif %}
         {% if user.is_authenticated and not user_is_creator %}
             {% if add_to_watchlist %}
                 <form action="{% url 'auctions:add_to_watchlist' %}" method="post">
                     {% csrf_token %}
                     <input type="hidden" value="{{current_listing.id}}" name="listing_id">
-                    <button class="btn btn-success" type="submit">
+                    <button class="btn btn-success watchlist_btn" type="submit">
                         <i class="bi bi-plus-lg mr-1"></i>
                         Add to Watchlist
                     </button>
@@ -22,46 +71,16 @@
                 <form action="{% url 'auctions:remove_from_watchlist' %}" method="post">
                     {% csrf_token %}
                     <input type="hidden" value="{{current_listing.id}}" name="listing_id">
-                    <button class="btn btn-danger" type="submit">
+                    <button class="btn btn-danger watchlist_btn" type="submit">
                         <i class="bi bi-trash3 mr-1"></i>
                         Delete from Watchlist
                     </button>
                 </form>
             {% endif %}
         {% endif %}
-        <div class="img_container">
-            <img src="{{ current_listing.image_url }}" alt="{{ current_listing.title }}" class="img">
-        </div>
-        <div>{{ current_listing.description }}</div>
-        <div>Category: {{ current_listing.category }}</div>
-        <div>Listed by: {{ current_listing.creator_id }}</div>
-        {% if no_bids %}
-            <div>${{ current_listing.initial_bid }} - Initial bid</div>
-        {% else %}
-            <div>${{ highest_bid }} - Highest bid</div>
-        {% endif %}
-        {% if number_of_biddings > 0 %}
-            {% if number_of_biddings == 1 %}
-                <a href="{% url 'auctions:bids_details' current_listing.id %}">1 bid so far</a>
-            {% else %}
-                <a href="{% url 'auctions:bids_details' current_listing.id %}">{{ number_of_biddings }} bids so far</a>
-            {% endif %}
-            {% if user == highest_bidder %}
-                <div>Your bid is the highest bid</div>
-            {% else %}
-                <div>{{highest_bidder}} has the highest bid</div>
-            {% endif %}
-        {% else %}
-            <div> No bids so far</div>
-        {% endif %}
-        {% if user.is_authenticated and not user_is_creator %}
-            <form action="{% url 'auctions:add_bid' %}" method="post">
-                {% csrf_token %}
-                {{ add_bid_form }}
-                <input type="hidden" value="{{current_listing.id}}" name="listing_id">
-                <input class="btn btn-primary" type="submit" value="Place Bid">
-            </form>
 
+
+        {% if user.is_authenticated and not user_is_creator %}
             <div class="d-flex flex-column mt-3 mx-5" style="max-width:750px;">
                 <form action="{% url 'auctions:add_comment' current_listing.id %}" method="post" class="d-flex">
                     {% csrf_token %}
@@ -78,6 +97,5 @@
                 {% endfor %}
             </div>
         {% endif %}
-    </div>
 
 {% endblock %}

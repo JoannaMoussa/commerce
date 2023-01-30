@@ -22,7 +22,7 @@ class NewListingForm(forms.Form):
 
 # django form that allows the user to add a bid for a listing.
 class PlaceBidForm(forms.Form):
-    bid = forms.FloatField(label="Bid", required=True, widget=forms.NumberInput(attrs={'class': 'form-control col-2 mb-3', 'placeholder': 'Bid'}))
+    bid = forms.FloatField(label="", required=True, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Bid'}))
 
 
 # django form that allows the user to add a comment for a listing.
@@ -255,7 +255,7 @@ def add_bid(request):
     else: # GET
         return HttpResponseRedirect(reverse("auctions:index"))
 
-@login_required(login_url='/login')
+
 def bids_details(request, listing_id):
     current_listing = Listing.objects.get(id=listing_id)
     biddings = current_listing.biddings.all()
