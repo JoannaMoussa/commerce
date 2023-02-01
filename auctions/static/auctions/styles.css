@@ -35,18 +35,13 @@ body {
     border: 2px solid #555;
 }
 
-.specs-container{
+.specs_container_active_listing{
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     font-size: 20px;
-    width:400px;
-    height:400px;
     margin-left: 30px;
-}
-
-.listing_title{
-    width: 300px;
+    /*height: 400px;*/
 }
 
 .close_auction_btn{
@@ -54,6 +49,27 @@ body {
 }
 
 .watchlist_btn{
-    margin-left: 32px;
     font-size: 18px;
+}
+
+.bid_form{
+    width: 250px;
+}
+
+.btn_container{
+    width: 300px;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+
+/* Styling for the closed listing page*/
+.specs_container_closed_listing{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-size: 20px;
+    margin-left: 30px;
+    /*height: 400px;*/
 }

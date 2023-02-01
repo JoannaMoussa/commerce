@@ -1,7 +1,7 @@
 {% extends "auctions/layout.html" %}
 
 {% block body %}
-    <h2>Category: {{ category_name }}</h2>
+    <h2 class="ml-4 mb-3">Category: {{ category_name }}</h2>
     <div class="d-flex flex-wrap justify-content-start">
         {% for filtered_listing in filtered_listings %}
             <div class="card mb-4 ml-4" style="width: 18rem;">

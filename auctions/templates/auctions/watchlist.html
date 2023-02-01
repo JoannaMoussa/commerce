@@ -2,9 +2,9 @@
 
 {% block body %}
         {% if not watchlist_listings %}
-            <h2>Your Watchlist is Empty</h2>
+            <h2 class="ml-4">Your Watchlist is Empty</h2>
         {% else %}
-            <h2>Your Watchlist</h2>
+            <h2 class="ml-4">Your Watchlist</h2>
             <div class="d-flex flex-wrap">
                 {% for watchlist_listing in watchlist_listings %}
                     {% if watchlist_listing.is_closed %}
