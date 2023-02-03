@@ -10,27 +10,34 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
 MAX_DESCRIPTION_LEN = 100
+DEFAULT_IMG_URL ="https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1665px-No-Image-Placeholder.svg.png"
 
-# django form that allows the user to create a new listing.
+# django form to create a new listing.
 class NewListingForm(forms.Form):
-    title = forms.CharField(label="Listing Title", required=True, widget=forms.TextInput(attrs={'class': 'form-control col-2 mb-3'}))
-    description = forms.CharField(label="Description", required=True, widget=forms.Textarea(attrs={'class': 'form-control col-4 mb-3', 'rows': '5'}))
+    title = forms.CharField(label="Listing Title", max_length=20, required=True, widget=forms.TextInput(attrs={'class': 'form-control col-2 mb-3'}))
+    description = forms.CharField(label="Description", max_length=200, required=True, widget=forms.Textarea(attrs={'class': 'form-control col-4 mb-3', 'rows': '5'}))
     initial_bid = forms.FloatField(label="Starting bid", required=True, widget=forms.NumberInput(attrs={'class': 'form-control col-2 mb-3'}))
-    image_url = forms.URLField(label="Image URL", widget=forms.URLInput(attrs={'class': 'form-control col-2 mb-3'}))
-    category = forms.ChoiceField(label="Category", choices=CATEGORIES, widget=forms.Select(attrs={'class': 'form-control col-2 mb-3'}))
+    image_url = forms.URLField(label="Image URL", required=False, widget=forms.URLInput(attrs={'class': 'form-control col-2 mb-3'}))
+    category = forms.ChoiceField(label="Category", required=False, choices=CATEGORIES, widget=forms.Select(attrs={'class': 'form-control col-2 mb-3'}))
 
 
-# django form that allows the user to add a bid for a listing.
+# django form to add a bid for a listing.
 class PlaceBidForm(forms.Form):
     bid = forms.FloatField(label="", required=True, widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Bid'}))
 
 
-# django form that allows the user to add a comment for a listing.
+# django form to add a comment for a listing.
 class AddCommentForm(forms.Form):
-    comment = forms.CharField(label="", required=True, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Add comment'}))
+    comment = forms.CharField(label="", max_length=100, required=True, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Add comment'}))
 
 
 def index(request):
+    '''
+    This function filters the active listings and the closed listings.
+    And in order to show each listing in a card format on the index page,
+    this function selects, for each listing, a maximun of 100 character 
+    for the description, and specifies what price to show (initial bid or max bid)
+    '''
     active_listings = Listing.objects.filter(is_closed=False)
     closed_listings = Listing.objects.filter(is_closed=True)
     for active_listing in active_listings:
@@ -112,6 +119,9 @@ def register(request):
 
 @login_required(login_url='/login')
 def create_listing(request):
+    '''This function saves the listing details (coming 
+    from a post request) in the database.
+    '''
     if request.method == "POST":
         current_user = request.user
         new_listing = Listing()
@@ -119,7 +129,11 @@ def create_listing(request):
         new_listing.title = request.POST['title']
         new_listing.description = request.POST['description']
         new_listing.initial_bid = request.POST['initial_bid']
-        new_listing.image_url = request.POST['image_url']
+        # if the user did not give an image url, i'll put a default one
+        if not request.POST['image_url']:
+            new_listing.image_url = DEFAULT_IMG_URL
+        else:
+            new_listing.image_url = request.POST['image_url']
         new_listing.category = request.POST['category']
         new_listing.save()
         messages.success(request, 'Your listing was created successfully!')
@@ -174,6 +188,8 @@ def listing_page(request, listing_id):
             "highest_bid": highest_bid,
             "number_of_biddings" : number_of_biddings,
             "highest_bidder": highest_bidder,
+            "user_is_creator": user_is_creator,
+            "add_to_watchlist": add_to_watchlist,
             "listing_comments": listing_comments
         })
 
@@ -193,12 +209,13 @@ def listing_page(request, listing_id):
 
 @login_required(login_url='/login')
 def add_to_watchlist(request):
+    '''This function adds a listing to a user's watchlist.'''
     if request.method == "POST":
         current_user = request.user
         listing_id = request.POST["listing_id"]
         current_listing = Listing.objects.get(id=listing_id)
         current_user.watchlist.add(current_listing)
-        # TODO show a success message to the user that the listing item was added to the watchlist.
+        messages.success(request, 'The listing was added to your watchlist.')
         return HttpResponseRedirect(reverse("auctions:listing_page", kwargs={'listing_id': listing_id}))
     else: # GET
         return HttpResponseRedirect(reverse("auctions:index"))
@@ -206,12 +223,13 @@ def add_to_watchlist(request):
 
 @login_required(login_url='/login')
 def remove_from_watchlist(request):
+    '''This function removes a listing from a user's watchlist.'''
     if request.method == "POST":
         current_user = request.user
         listing_id = request.POST["listing_id"]
         current_listing = Listing.objects.get(id=listing_id)
         current_user.watchlist.remove(current_listing)
-        # TODO show a success message to the user that the listing item was added to the watchlist.
+        messages.warning(request, 'The listing was removed from your watchlist.')
         return HttpResponseRedirect(reverse("auctions:listing_page", kwargs={'listing_id': listing_id}))
     else: # GET
         return HttpResponseRedirect(reverse("auctions:index"))
@@ -219,6 +237,9 @@ def remove_from_watchlist(request):
 
 @login_required(login_url='/login')
 def add_bid(request):
+    '''This function checks if the bid value is valid (equal or greater 
+    than the initial bid or greater than the previous bids) 
+    and saves it to the database.'''
     if request.method == "POST":
         current_user = request.user
         listing_id = request.POST["listing_id"]
@@ -257,6 +278,9 @@ def add_bid(request):
 
 
 def bids_details(request, listing_id):
+    '''This function gets all the bids made 
+    on a given listing.
+    '''
     current_listing = Listing.objects.get(id=listing_id)
     biddings = current_listing.biddings.all()
     return render(request, "auctions/bids_details.html", {
@@ -265,7 +289,11 @@ def bids_details(request, listing_id):
     })
 
 
+@login_required(login_url='/login')
 def close_auction(request, listing_id):
+    '''This function sets the attribute "is_closed" 
+    to True for a specific listing.
+    '''
     current_listing = Listing.objects.get(id=listing_id)
     current_listing.is_closed = True
     current_listing.save()
@@ -274,6 +302,9 @@ def close_auction(request, listing_id):
 
 @login_required(login_url='/login')
 def add_comment(request, listing_id):
+    '''This function adds a comment from a given user id
+    to a specific listing.
+    '''
     if request.method == "POST":
         current_user = request.user
         new_comment = Comments()
@@ -289,6 +320,10 @@ def add_comment(request, listing_id):
 
 @login_required(login_url='/login')
 def watchlist(request):
+    '''This function gets all the watchlisted listings of a given user.
+    And it handles long descriptions and which price to show 
+    (initial bid of highest bid).
+     '''
     current_user = request.user
     watchlist_listings = current_user.watchlist.all()
     for watchlist_listing in watchlist_listings:
@@ -307,8 +342,12 @@ def watchlist(request):
 
 
 def categories(request):
+    '''This function saves all the listing categories 
+    in a list called categories.
+    '''
     categories = []
-    for category in CATEGORIES:
+    # I removed the first element of the list CATEGORIES bcz it's the option "Choose a category"
+    for category in CATEGORIES[1:]: 
         categories.append(category[1])
     return render(request, "auctions/categories.html", {
         "categories": categories
@@ -316,6 +355,10 @@ def categories(request):
 
 
 def listings_by_category(request, category_name):
+    '''This function selects all the listings that belong 
+    to the category: category_name, and saves them 
+    in a variable called filtered_listings.
+    '''
     filtered_listings = Listing.objects.filter(category=category_name, is_closed=False)
     for filtered_listing in filtered_listings:
         # Handling long descriptions

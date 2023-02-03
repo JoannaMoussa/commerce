@@ -1,7 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-CATEGORIES = [("Fashion", "Fashion"),
+CATEGORIES = [(None, "Choose a category"),
+              ("Fashion", "Fashion"),
               ("Toys", "Toys"),
               ("Electronics", "Electronics"),
               ("Home", "Home")]
@@ -13,11 +14,11 @@ class User(AbstractUser):
 
 class Listing(models.Model):
     creator_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name="listing_items")
-    title = models.CharField(max_length=20)
-    description = models.TextField(max_length=200)
+    title = models.CharField(max_length=40)
+    description = models.TextField(max_length=300)
     initial_bid = models.FloatField()
-    image_url = models.URLField()
-    category = models.CharField(choices=CATEGORIES, max_length=20)
+    image_url = models.URLField(blank=True, null=True, max_length=500)
+    category = models.CharField(blank=True, null=True, choices=CATEGORIES, max_length=20)
     is_closed = models.BooleanField(default=False)
     #users who watchlisted a listing item
     watchlist_users = models.ManyToManyField(User, blank=True, related_name="watchlist")

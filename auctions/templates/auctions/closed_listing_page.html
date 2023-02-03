@@ -2,18 +2,35 @@
 
 {% block body %}
 <div class="d-flex flex-wrap flex-md-nowrap justify-content-center justify-content-md-start align-items-center col-10 offset-1 mb-5">
-    <!--Title + img -->
+    <!--Title + img + delete_watchlist_+btn-->
     <div class="d-flex flex-column align-items-start mb-2">
-        <h2>{{ current_listing.title }} - Closed</h2>
-        <div>
+        <h2 class="title">{{ current_listing.title }} - Closed</h2>
+        <div class="mb-2">
             <img src="{{ current_listing.image_url }}" alt="{{ current_listing.title }}" class="img">
         </div>
+        {% if user.is_authenticated and not user_is_creator and not add_to_watchlist %}
+            <div class="btn_container">
+                <form action="{% url 'auctions:remove_from_watchlist' %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" value="{{current_listing.id}}" name="listing_id">
+                    <button class="btn btn-danger watchlist_btn" type="submit">
+                        <i class="bi bi-trash3 mr-1"></i>
+                        Delete from Watchlist
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+        
     </div>
     <!--img specifications container-->
     <div class="specs_container_closed_listing">
         <div class="d-flex flex-column">
             <div class="text-justify mb-2"><strong>Description:</strong> {{ current_listing.description }}</div>
-            <div class="mb-2"><strong>Category:</strong> {{ current_listing.category }}</div>
+            {% if not current_listing.category %}
+                <div class="mb-2"><strong>Category:</strong> not specified</div>
+            {% else %}
+                <div class="mb-2"><strong>Category:</strong> <a href="{% url 'auctions:listings_by_category' current_listing.category %}">{{ current_listing.category }}</a></div>
+            {% endif %}
         </div>
         <div class="mb-2"><strong>Listed by:</strong> {{ current_listing.creator_id }}</div>
         <div class="d-flex flex-column">

@@ -35,6 +35,10 @@ body {
     border: 2px solid #555;
 }
 
+.title{
+    width:300px;
+}
+
 .specs_container_active_listing{
     display: flex;
     flex-direction: column;
