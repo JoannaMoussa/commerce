@@ -4,7 +4,7 @@
 
 This project consists of an eBay-like e-commerce auction site that allows users to post auction listings, place bids on listings, comment on those listings, and add listings to a “watchlist.”
 
-* The website contains the following pages
+* The website contains the following pages:
 1. **Register page:** New users can register by giving their username, email and password.
 
 1. **Login page:** Registered users can log in by giving their username and password.
