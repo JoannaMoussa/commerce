@@ -1,4 +1,4 @@
-# CS50's Web Programming with Python and JavaScript
+## CS50's Web Programming with Python and JavaScript
 
 # Project 2 - eBay-like e-commerce auction site
 
